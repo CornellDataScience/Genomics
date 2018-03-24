@@ -1,1 +1,5 @@
+# Stop IDE files from being pushed
 .idea
+
+# Keep large files from being pushed to git
+assets/
