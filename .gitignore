@@ -4,4 +4,4 @@
 # Keep large files from being pushed to git
 assets/
 
-__pychache__
+__pycache__
