@@ -22,7 +22,7 @@ class Noisey(nn.Module):
 
         self.enc = nn.LSTM(
             input_size=sum(wchs),
-            hidden_size=enc_size / 2,
+            hidden_size=enc_size // 2,
             batch_first=True,
             bidirectional=True
         )
@@ -35,28 +35,29 @@ class Noisey(nn.Module):
         self.dewindow7 = nn.Conv1d(enc_size, wchs[3], 7, padding=3)
         self.dewindow9 = nn.Conv1d(enc_size, wchs[4], 9, padding=4)
 
-        self.to_bases = nn.Conv1d(sum(wchs), 1, 1)
+        self.to_bases = nn.Conv1d(sum(wchs), 4, 1)
 
     def forward(self, genes, masks):
         tmp = self.reg(genes + torch.normal(self.alpha * masks, self.beta * masks))
         tmp = self.act1(torch.cat((
             self.window1(tmp),
-            self.windows3(tmp),
-            self.windows5(tmp),
-            self.windows7(tmp),
-            self.windows9(tmp)
+            self.window3(tmp),
+            self.window5(tmp),
+            self.window7(tmp),
+            self.window9(tmp)
         ), 1))
-        tmp, _ = self.enc(tmp)
-        tmp = self.act2(tmp)
+        tmp, _ = self.enc(tmp.transpose(1, 2))
+        tmp = self.act2(tmp.transpose(1, 2))
+
         tmp = self.to_bases(torch.cat((
             self.dewindow1(tmp),
             self.dewindow3(tmp),
             self.dewindow5(tmp),
             self.dewindow7(tmp),
             self.dewindow9(tmp)
-        )))
+        ), 1))
 
-        return self.to_bases(tmp)
+        return tmp
 
     def encode(self, genes):
         tmp = self.act1(torch.cat((

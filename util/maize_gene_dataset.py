@@ -21,10 +21,14 @@ class MaizeGeneDataset(Dataset):
         elif mode == "melt":
             self.data = pd.melt(self.data, value_vars=inputs, value_name="sequence", var_name="type")
             self.inputs = ["sequence"]
+            inds = self.data['sequence'].str.len().sort_values().index
+            self.data.reindex(inds)
         elif mode == "cat":
             self.data["sequence"] = self.data[inputs].apply(lambda row: ''.join(row), axis=1)
             self.data.drop(columns=inputs)
             self.inputs = ["sequence"]
+            inds = self.data['sequence'].str.len().sort_values().index
+            self.data.reindex(inds)
 
     def __len__(self):
         return len(self.data)
