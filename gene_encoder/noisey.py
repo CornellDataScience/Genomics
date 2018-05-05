@@ -37,8 +37,13 @@ class Noisey(nn.Module):
 
         self.to_bases = nn.Conv1d(sum(wchs), 4, 1)
 
+        self.softmax = nn.Softmax()
+
     def forward(self, genes, masks):
-        tmp = self.reg(genes + torch.normal(self.alpha * masks, self.beta * masks))
+        #tmp = self.reg(genes + torch.normal(self.alpha * masks, self.beta * masks))
+ 
+        tmp = genes
+        print(tmp.shape)
         tmp = self.act1(torch.cat((
             self.window1(tmp),
             self.window3(tmp),
@@ -46,8 +51,10 @@ class Noisey(nn.Module):
             self.window7(tmp),
             self.window9(tmp)
         ), 1))
-        tmp, _ = self.enc(tmp.transpose(1, 2))
-        tmp = self.act2(tmp.transpose(1, 2))
+        print(tmp.shape)
+        tmp, _ = self.enc(tmp.transpose(1,2))
+        print(tmp.shape)
+        tmp = self.act2(tmp.transpose(1,2))
 
         tmp = self.to_bases(torch.cat((
             self.dewindow1(tmp),
@@ -56,7 +63,7 @@ class Noisey(nn.Module):
             self.dewindow7(tmp),
             self.dewindow9(tmp)
         ), 1))
-
+      
         return tmp
 
     def encode(self, genes):
