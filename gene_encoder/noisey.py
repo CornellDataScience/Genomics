@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class Noisey(nn.Module):
 
-    def __init__(self, features, wchs, enc_size, alpha, beta):
+    def __init__(self, features, alpha, beta):
         super(Noisey, self).__init__()
 
         self.alpha = alpha
@@ -12,67 +12,49 @@ class Noisey(nn.Module):
 
         self.reg = nn.Softmax(1)
 
-        self.window1 = nn.Conv1d(features, wchs[0], 1, padding=0)
-        self.window3 = nn.Conv1d(features, wchs[1], 3, padding=1)
-        self.window5 = nn.Conv1d(features, wchs[2], 5, padding=2)
-        self.window7 = nn.Conv1d(features, wchs[3], 7, padding=3)
-        self.window9 = nn.Conv1d(features, wchs[4], 9, padding=4)
+        self.window3 = nn.Conv1d(features, 8, 3, padding=1, stride=2)
 
-        self.act1 = nn.Sigmoid()
+        self.act1 = nn.ReLU()
 
-        self.enc = nn.LSTM(
-            input_size=sum(wchs),
-            hidden_size=enc_size // 2,
-            batch_first=True,
-            bidirectional=True
-        )
+        self.window5 = nn.Conv1d(8, 4, 5, padding=2, stride=2)
 
-        self.act2 = nn.Sigmoid()
+        self.act2 = nn.ReLU()
 
-        self.dewindow1 = nn.Conv1d(enc_size, wchs[0], 1, padding=0)
-        self.dewindow3 = nn.Conv1d(enc_size, wchs[1], 3, padding=1)
-        self.dewindow5 = nn.Conv1d(enc_size, wchs[2], 5, padding=2)
-        self.dewindow7 = nn.Conv1d(enc_size, wchs[3], 7, padding=3)
-        self.dewindow9 = nn.Conv1d(enc_size, wchs[4], 9, padding=4)
+        self.stride1 = nn.Conv1d(4, 2, 5, padding=2, stride=2)
 
-        self.to_bases = nn.Conv1d(sum(wchs), 4, 1)
+        self.act3 = nn.ReLU()
 
-        self.softmax = nn.Softmax()
+        self.stride2 = nn.Conv1d(2, 1, 7, padding=3, stride=2)
+
+        self.act4 = nn.ReLU()
+
+        self.unstride1 = nn.ConvTranspose1d(1, 2, 7, padding=3, stride=2)
+
+        self.act5 = nn.ReLU()
+
+        self.unstride2 = nn.ConvTranspose1d(2, 4, 5, padding=2, stride=2)
+
+        self.act6 = nn.ReLU()
+
+        self.dewindow5 = nn.ConvTranspose1d(4, 8, 5, padding=2, stride=2)
+
+        self.act7 = nn.ReLU()
+
+        self.dewindow3 = nn.ConvTranspose1d(8, features, 3, padding=1, stride=2)
+
+        self.softmax = nn.Softmax(1)
 
     def forward(self, genes, masks):
-        #tmp = self.reg(genes + torch.normal(self.alpha * masks, self.beta * masks))
+        # tmp = self.reg(genes + torch.normal(self.alpha * masks, self.beta * masks))
  
         tmp = genes
-        print(tmp.shape)
-        tmp = self.act1(torch.cat((
-            self.window1(tmp),
-            self.window3(tmp),
-            self.window5(tmp),
-            self.window7(tmp),
-            self.window9(tmp)
-        ), 1))
-        print(tmp.shape)
-        tmp, _ = self.enc(tmp.transpose(1,2))
-        print(tmp.shape)
-        tmp = self.act2(tmp.transpose(1,2))
+        tmp = self.act1(self.window3(tmp))
+        tmp = self.act2(self.window5(tmp))
+        tmp = self.act3(self.stride1(tmp))
+        tmp = self.act4(self.stride2(tmp))
+        tmp = self.act5(self.unstride1(tmp))
+        tmp = self.act6(self.unstride2(tmp))
+        tmp = self.act7(self.dewindow5(tmp))
+        tmp = self.softmax(self.dewindow3(tmp))
 
-        tmp = self.to_bases(torch.cat((
-            self.dewindow1(tmp),
-            self.dewindow3(tmp),
-            self.dewindow5(tmp),
-            self.dewindow7(tmp),
-            self.dewindow9(tmp)
-        ), 1))
-      
         return tmp
-
-    def encode(self, genes):
-        tmp = self.act1(torch.cat((
-            self.window1(genes),
-            self.windows3(genes),
-            self.windows5(genes),
-            self.windows7(genes),
-            self.windows9(genes)
-        ), 1))
-        tmp, (_, c) = self.enc(tmp)
-        return c

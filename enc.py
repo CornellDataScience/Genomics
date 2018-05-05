@@ -28,9 +28,10 @@ basemap = {'A': 0, 'T': 1, 'C': 2, 'G': 3}
 
 
 def mycollate(batch):
-    b = torch.zeros(len(batch), 4, len(batch[0]["sequence"]), requires_grad=True)
-    m1 = torch.zeros(len(batch), 4, len(batch[0]["sequence"]), dtype=torch.float)
-    m2 = torch.zeros(len(batch), 4, len(batch[0]["sequence"]), dtype=torch.uint8)
+    l = len(batch[0]["sequence"])
+    b = torch.zeros(len(batch), 4, l + (l+1) % 2, requires_grad=True)
+    m1 = torch.zeros(len(batch), 4, l + (l+1) % 2, dtype=torch.float)
+    m2 = torch.zeros(len(batch), 4, l + (l+1) % 2, dtype=torch.uint8)
     for i, gene in enumerate(batch):
         for j, c in enumerate(gene['sequence']):
             if c in basemap:
@@ -50,7 +51,7 @@ del valset
 print("end load")
 
 
-net = Noisey(4, [1, 12, 9, 6, 3], 256, 0.2, 0.1)
+net = Noisey(4, 0.2, 0.1)
 net = net.cuda()
 
 epochs = 50
@@ -64,6 +65,7 @@ logfile = open('log.txt', 'w+')
 print("Starting\n")
 for epoch in range(epochs):
     for i, (genes, m1, m2) in enumerate(dataloader):
+        print("runs")
         genes = genes.cuda()
         
         m1 = m1.cuda()
@@ -76,13 +78,11 @@ for epoch in range(epochs):
         outputs = outputs.data
         genes.requires_grad=True
         outputs.requires_grad=False
-  
 
         loss = loss_func(genes, outputs)
         train_error.append(loss)
         loss.backward()
         optimizer.step()
-        break
         print("Train Loss: {}\n".format(loss.data))
         logfile.write("Epoch {} Batch {} Train Loss: {}\n".format(epoch, i, loss.data))
     break
