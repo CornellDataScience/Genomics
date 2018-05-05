@@ -4,6 +4,7 @@ import torch
 from torch.nn.utils.rnn import pack_sequence
 from torch import autograd, nn, optim
 from gene_encoder.noisey import Noisey
+from gene_encoder.vae import Vae
 from random import shuffle
 
 inputs = ['ATG_promoter', 'transcript_sequence']
@@ -50,7 +51,8 @@ del valset
 print("end load")
 
 
-net = Noisey(4, [1, 12, 9, 6, 3], 256, 0.2, 0.1)
+
+net = Vae(4,12, 256)
 net = net.cuda()
 
 epochs = 50
@@ -76,16 +78,14 @@ for epoch in range(epochs):
         outputs = outputs.data
         genes.requires_grad=True
         outputs.requires_grad=False
-  
+
 
         loss = loss_func(genes, outputs)
         train_error.append(loss)
         loss.backward()
         optimizer.step()
-        break
         print("Train Loss: {}\n".format(loss.data))
         logfile.write("Epoch {} Batch {} Train Loss: {}\n".format(epoch, i, loss.data))
-    break
     if epoch > 0 and epoch % 5 == 0:
         tmperror = 0
         numits = 0
