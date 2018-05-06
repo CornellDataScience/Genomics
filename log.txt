@@ -1,0 +1,11 @@
+Epoch 0 Batch 0 Train Loss: 0.18952301144599915
+Epoch 0 Batch 1 Train Loss: 0.18977102637290955
+Epoch 0 Batch 2 Train Loss: 0.18977275490760803
+Epoch 0 Batch 3 Train Loss: 0.18955034017562866
+Epoch 0 Batch 4 Train Loss: 0.18954797089099884
+Epoch 0 Batch 5 Train Loss: 0.1895153820514679
+Epoch 0 Batch 6 Train Loss: 0.1891465187072754
+Epoch 0 Batch 7 Train Loss: 0.1897284984588623
+Epoch 0 Batch 8 Train Loss: 0.18942955136299133
+Epoch 0 Batch 9 Train Loss: 0.18960273265838623
+Epoch 0 Batch 10 Train Loss: 0.18988528847694397
